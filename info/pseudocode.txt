@@ -1,0 +1,13 @@
+Rootkit
+{
+    install root kit on computer;
+
+    root kit searches for process with highest priviliges;
+    root kit injects itself in process with highest priviliges;
+
+    root kit opens network connection to us;
+    root kit sends information back to us about the system;
+
+    root kit works as part of our botnet;
+    root kit allows for a backdoor;
+}
