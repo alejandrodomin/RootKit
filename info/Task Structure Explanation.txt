@@ -1,0 +1,324 @@
+    This document tries to explain clearly what fields in the structure 
+task_struct do. It's not complete and everyone is welcome to add information. 
+Let's start by saying that each process under Linux is defined by a structure 
+task_struct. The following information are available (on kernel 2.6.7):
+
+  - volatile long state;    /* -1 unrunnable, 0 runnable, >0 stopped */
+      represents the state of the process. Authorized states are 
+      TASK_RUNNING, TASK_INTERRUPTIBLE, TASK_UNINTERRUPTIBLE, TASK_STOPPED, 
+      TASK_ZOMBIE and TASK_DEAD
+
+  - struct thread_info *thread_info;
+      a pointer to a thread_info...
+
+  - atomic_t usage;
+      used by get_task_struct(). It's also set in kernel/fork.c. This value 
+      acts like a reference count on the task structure of a process. It can be
+      used if we don't want to hold the tasklist_lock.
+
+  - unsigned long flags;    /* per process flags, defined below */
+      process flag can be, for example, PF_DEAD when exit_notify() is called.
+      List is of possible values is in include/linux/sched.h 
+
+  - unsigned long ptrace;
+      used by ptrace a system call that provides the ability to a parent 
+      process to observe and control the execution of another process.  
+  
+  - int lock_depth;         /* Lock depth */
+      used for big kernel lock in SMP. It's a per-process counter of acquires.
+      -1 means no lock.
+ 
+  - int prio, static_prio;
+      priority of a process used when scheduled. Variable prio, which is the 
+      user-nice values, can be converted to static priority to better scale 
+      various scheduler parameters.
+      
+  - struct list_head run_list;
+      a list of runnable task.
+
+  - prio_array_t *array;
+      a pointer to a priority array. 
+  
+  - unsigned long sleep_avg;
+      average sleep time of the process
+
+  - long interactive_credit;
+      used to evaluate the interactivity of a task. For example, tasks that 
+      sleep a long time are categorized as idle and will get just interactive 
+      status to stay active and prevent them suddenly becoming cpu hogs and 
+      starving other processes.
+     
+  - unsigned long long timestamp;
+      keep the time when the process has been activating. It is used, for 
+      example, to recalculate the task's priority.
+
+  - int activated;
+      TO-DO                                                                                                                                        
+  - unsigned long policy;
+      the scheduling policy used for this process. It can be SCHED_NORMAL, 
+      SCHED_FIFO or SCHED_RR
+
+  - cpumask_t cpus_allowed;
+      mask that indicates on what CPUs the process can run.
+
+  - unsigned int time_slice, first_time_slice;
+      time during when the process can run.
+
+  - struct list_head tasks;
+      double linked list of tasks in the system.
+
+  - struct list_head ptrace_children;
+      list of children traced by the process.
+
+  - struct list_head ptrace_list;
+      list of parent that traces the process.                                   
+
+  - struct mm_struct *mm, *active_mm;
+      process address space describes by mm_struct. Field active_mm points to 
+      the active address space if the process doesn't have real one (eg kernel 
+      threads).
+  
+  /* task state */
+  - struct linux_binfmt *binfmt;
+      allows to define functions that are used to load the binary formats that 
+      linux accepts. 
+
+  - int exit_code, exit_signal;
+      holds code or signal when a process exited. 
+      code: SIGHUP, SIGINT, SIGQUIT, ...
+      signal: generally used with SIGCHLD to signal init on exit 
+
+  - int pdeath_signal;  
+      /*  The signal sent when the parent dies  */
+
+  /* ??? */
+  - unsigned long personality;
+      relates to the personality of the task, i.e. to the way certain system 
+      calls behave in order to emulate the "personality" of foreign flavors of
+      UNIX.
+
+  - int did_exec:1;
+      set to 1 when executing a new program using sys_execve() and searching 
+      the correct binary formats handler
+
+  - pid_t pid;
+      process identifier
+
+  - pid_t tgid;
+      identifier of the thread group leader
+
+  /*
+   * pointers to (original) parent process, youngest child, younger sibling,
+   * older sibling, respectively.  (p->father can be replaced with
+   * p->parent->pid)
+   */
+  - struct task_struct *real_parent; 
+      /* real parent process (when being debugged) */
+
+  - struct task_struct *parent;     
+      /* parent process */
+
+  - struct list_head children;      
+      /* list of my children */
+
+  - struct list_head sibling;
+      /* linkage in my parent's children list */
+
+  - struct task_struct *group_leader;
+      /* threadgroup leader */
+  
+  /* PID/PID hash table linkage. */
+  - struct pid_link pids[PIDTYPE_MAX];
+  
+  - wait_queue_head_t wait_chldexit;        
+      /* for wait4() */
+  
+  - struct completion *vfork_done;          
+      /* for vfork() */
+  
+  - int __user *set_child_tid;              
+      /* CLONE_CHILD_SETTID */
+      TO-DO
+  
+  - int __user *clear_child_tid;            
+      /* CLONE_CHILD_CLEARTID */
+      TO-DO                                                                                                                                        
+  - unsigned long rt_priority;
+      real time priority    
+
+  - unsigned long it_real_value, it_prof_value, it_virt_value;
+      holds the current timer value. It's used to implement the specific 
+      interval timer (itmer). 
+
+  - unsigned long it_real_incr, it_prof_incr, it_virt_incr;
+      holds the duration of the interval. It's used to implement the specific 
+      interval timer (itmer). 
+
+  - struct timer_list real_timer;
+      a periodic timer
+
+  - unsigned long utime, stime, cutime, cstime;
+      utime = user time,
+      stime = system time,
+      cutime = cumulative user time (process + its children),
+      cstime = cumulative system time (process + its children) 
+
+  - unsigned long nvcsw, nivcsw, cnvcsw, cnivcsw; 
+      /* context switch counts */
+      think this fields is never update...
+
+  - u64 start_time;
+      value of the jiffies when the task was created        
+
+/* mm fault and swap info: this can arguably be seen as either mm-specific or 
+   thread-specific */
+  - unsigned long min_flt, maj_flt, cmin_flt, cmaj_flt;
+      min_flt: minor fault, 
+      maj_flt: major fault (means that it had access to the disk),
+      cmin_flt: cumulative minor fault (process + its children),
+      cmaj_flt: cumulative major fault (process + its children)
+
+/* process credentials */
+  - uid_t uid,euid,suid,fsuid;
+      uid: user identifier,
+      euid: effective UID used for privilege checks,
+      suid: saved UID used to support switching permission,
+      fsuid: UID used for filesystem access checks (used by NFS for 
+             example)
+
+  - gid_t gid,egid,sgid,fsgid;
+      gid: group identifier, 
+      egid: effective GID used for privilege checks,
+      sgid: saved GID used to support switching permission,
+      fgid: GID used for filesystem access checks
+
+  - struct group_info *group_info;
+
+  - kernel_cap_t cap_effective, cap_inheritable, cap_permitted;
+      POSIX capability information. It's sets of bits that permit splitting of 
+      the privileges typically held by root into a larger set of more specific 
+      privileges. 
+
+  - int keep_capabilities:1;
+      used to forbid the drop of all privileges.
+
+  - struct user_struct *user;
+      information about user who owns the process. 
+
+/* limits */
+  - struct rlimit rlim[RLIM_NLIMITS];		//IMPORTANT
+      used to control/accounting resource usage. Resource are CPU time, maximum
+      file size, max data size, max stack size, max core file size, max 
+      resident set size, man number of processes, man number of open files, 
+      max locked-in-memory address space, address space limit and the maximum 
+      file locks held.
+
+  - unsigned short used_math;			//IMPORTANT
+      sets if current process can use or not the FPU.   
+ 
+  - char comm[16];
+      command name.
+
+/* file system info */
+  - int link_count, total_link_count;
+      counts the number of symbolic links. 
+
+/* ipc stuff */
+  - struct sysv_sem sysvsem;
+
+/* CPU-specific state of this task */
+  - struct thread_struct thread;
+      holds information about cache TLS descriptors, debugging registers, 
+      fault info, floating point, virtual 86 mode or IO permissions. 
+
+/* filesystem information */
+  - struct fs_struct *fs;
+
+/* open file information */
+  - struct files_struct *files;
+
+/* namespace */
+  - struct namespace *namespace;
+
+/* signal handlers */
+  - struct signal_struct *signal;
+      signal associated to the process
+
+  - struct sighand_struct *sighand;
+      signal handler associated to the process
+
+  - sigset_t blocked, real_blocked;
+      signals that are blocked by the process         
+
+  - struct sigpending pending;
+      signals generated but not yet delivered                                                                                                                                     
+  - unsigned long sas_ss_sp;
+      TO-DO
+
+  - size_t sas_ss_size;
+      TO-DO
+
+  - int (*notifier)(void *priv);
+
+  - void *notifier_data;
+      TO-DO
+
+  - sigset_t *notifier_mask;
+      TO-DO
+  
+  - void *security;
+      TO-DO
+
+  - struct audit_context *audit_context;
+      TO-DO
+
+/* Thread group tracking */
+  - u32 parent_exec_id;
+  - u32 self_exec_id;
+     used to distinguish if we have changed execution domain by comparing the 
+     two value. When changing execution domain, self_exec_id is incremented and
+     then is different from parent_exec_id.
+
+/* Protection of (de-)allocation: mm, files, fs, tty */
+  - spinlock_t alloc_lock;
+
+/* Protection of proc_dentry: nesting proc_lock, dcache_lock, 
+  write_lock_irq(&tasklist_lock); */
+  - spinlock_t proc_lock;
+
+/* context-switch lock */
+  - spinlock_t switch_lock;
+
+/* journaling filesystem info */
+  - void *journal_info;
+      used by journaling file system like reiserfs.
+
+/* VM state */
+  - struct reclaim_state *reclaim_state;
+      pointer to structure reclaim_state when a task is running system's page 
+      release (kmem_freepages).
+  
+  - struct dentry *proc_dentry;
+      TO-DO
+
+  - struct backing_dev_info *backing_dev_info;
+      TO-DO
+  
+  - struct io_context *io_context;
+      TO-DO
+  
+  - unsigned long ptrace_message;
+      TO-DO
+   
+  - siginfo_t *last_siginfo; /* For ptrace use.  */
+      TO-DO
+
+#ifdef CONFIG_NUMA
+  - struct mempolicy *mempolicy;
+      used to give hints in which node(s) memory should be allocated. There are
+      four policies per VMA and per process that are: interleave, bind, 
+      preferred and default.
+
+  - short il_next;          /* could be shared with used_math */
+      used when policy is interleave...
+#endif

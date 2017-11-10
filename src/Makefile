@@ -1,12 +1,7 @@
-ifneq ($(KERNELRELEASE),)
-# kbuild part of makefile
-obj-m  := rootkit.o
+obj-m += rootkit.o
 
-else
-# normal makefile
-    KDIR ?= /lib/modules/`uname -r`/build
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 
-default:
-    $(MAKE) -C $(KDIR) M=$$PWD
-
-endif
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
