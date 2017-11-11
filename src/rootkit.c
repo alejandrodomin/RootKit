@@ -3,6 +3,7 @@
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/errno.h>
+#include <linux/mempolicy.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Malware Team");
@@ -16,7 +17,9 @@ static int __init rootkit_init(void){
 	printk(KERN_INFO "Hello World!");
 
 	for_each_process(task){
-		printk(KERN_INFO "Task id: %d, Priority: %d", task->pid, task->rt_priority);
+		printk(KERN_INFO "Task id: %d", task->pid);
+		printk(KERN_INFO "Task UID: %d, Task GID: %d", task->loginuid.val, task->tgid);
+		printk(KERN_INFO "Task mempolicy: %d", task->mempolicy->mode);
 	}
 
 	return 0;
