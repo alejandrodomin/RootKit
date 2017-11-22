@@ -4,6 +4,18 @@
 #include <linux/sched.h>
 #include <linux/errno.h>
 #include <linux/mempolicy.h>
+#include <linux/types.h>
+#include <linux/unistd.h>
+#include <linux/string.h>
+#include <asm/current.h>
+#include <linux/sched.h>
+#include <linux/syscalls.h>
+#include <asm/system.h>
+#include <linux/fs.h>
+#include <linux/keyboard.h>
+#include <linux/input.h>
+#include <linux/semaphore.h>
+#include <linux/kmod.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Malware Team");
