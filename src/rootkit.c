@@ -19,7 +19,7 @@ static int __init rootkit_init(void){
 	for_each_process(task){
 		printk(KERN_INFO "Task id: %d", task->pid);
 		printk(KERN_INFO "Task UID: %d, Task GID: %d", task->loginuid.val, task->tgid);
-		printk(KERN_INFO "Task mempolicy: %d", task->mempolicy->mode);
+		// printk(KERN_INFO "Task mempolicy: %u", task->mempolicy->mode); // the kernel keeps killing it becuase of this line
 	}
 
 	return 0;
