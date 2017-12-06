@@ -1,7 +1,3 @@
-#ifndef BBB_DEV_H
-#define BBB_DEV_H
-
-
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/device.h>
@@ -67,7 +63,7 @@ static int reopen = 0;
 static char *filepath = 0;
 static int dio = 0;
 
-
-
-
-#endif
+// threads functions
+int thread_fn(void *); 
+void thread_cleanup(void);
+int thread_init (void);
