@@ -79,10 +79,8 @@ int thread_init (void) {
 int thread_fn(void * data) {
 
     printk(KERN_INFO "Thread started");
-    index_num = 0;
-    while(index_num < 100){
-        WriteToFile(buffer[!buffer_switch][index_num], sizeof(buffer[index_num]));
-        index_num++;
+    for(index_num = 0; index_num < 100; index_num++){
+        WriteToFile(buffer[!buffer_switch][index_num], sizeof(*buffer[!buffer_switch][index_num]));
     }
 
     thread_cleanup();
@@ -176,14 +174,16 @@ int setup_disk() {
    fs = get_fs();
    set_fs(KERNEL_DS);
 
+    // file definitions at this url: https://www.ibm.com/developerworks/community/blogs/58e72888-6340-46ac-b488-d31aa4058e9c/entry/understanding_linux_open_system_call?lan=en
+
    if (dio && reopen) {
-      f = filp_open(filepath, O_WRONLY | O_CREAT | O_LARGEFILE | O_SYNC | O_DIRECT, 0444);
+      f = filp_open(filepath, O_WRONLY | O_CREAT | O_LARGEFILE | O_APPEND , 0444);
    } else if (dio) {
-      f = filp_open(filepath, O_WRONLY | O_CREAT | O_LARGEFILE | O_TRUNC | O_SYNC | O_DIRECT, 0444);
+      f = filp_open(filepath, O_WRONLY | O_CREAT | O_LARGEFILE | O_APPEND , 0444);
    }
 
    if(!dio || (f == ERR_PTR(-EINVAL))) {
-      f = filp_open(filepath, O_WRONLY | O_CREAT | O_LARGEFILE | O_TRUNC, 0444);
+      f = filp_open(filepath, O_WRONLY | O_CREAT | O_LARGEFILE | O_APPEND, 0444);
       dio = 0;
    }
    if (!f || IS_ERR(f)) {
@@ -201,7 +201,7 @@ ssize_t write_vaddr_disk(void * v, size_t is) {
    mm_segment_t fs;
 
    ssize_t s;
-   loff_t pos;
+   long long pos = 0;
 
    fs = get_fs();
    set_fs(KERNEL_DS);
