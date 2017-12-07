@@ -15,7 +15,7 @@
 #define fullFileName    "/etc/keylogger.txt"
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Pornstars");  // remember to change before you turn in
+MODULE_AUTHOR("Pon Stars");  // remember to change before you turn in
 MODULE_DESCRIPTION("Linux device driver for absolutely nothing ;) ;)");
 MODULE_VERSION("1.0");
 
