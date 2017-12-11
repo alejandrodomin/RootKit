@@ -85,7 +85,6 @@ int thread_fn(void * data) {
 
     thread_cleanup();
 
-	return call_usermodehelper_exec( sub_info, UMH_NO_WAIT );
 
     return 0;
 }
