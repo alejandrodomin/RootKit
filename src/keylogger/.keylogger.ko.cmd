@@ -1,1 +1,0 @@
-cmd_/home/mike/Malware/RootKit/src/keylogger/keylogger.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/mike/Malware/RootKit/src/keylogger/keylogger.ko /home/mike/Malware/RootKit/src/keylogger/keylogger.o /home/mike/Malware/RootKit/src/keylogger/keylogger.mod.o ;  true

