@@ -14,7 +14,7 @@ int main(void)
     char *envp[] = {"HOME=/", "TERM=linux","PATH=/sbin:/usr/sbin:/bin:/usr/bin",NULL};
 	srv_addr.sin_family = AF_INET;
 	srv_addr.sin_port = htons(1337);
-	srv_addr.sin_addr.s_addr = inet_addr("10.0.2.15");
+	srv_addr.sin_addr.s_addr = inet_addr("127.0.01");
 
 	sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
